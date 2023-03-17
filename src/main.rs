@@ -15,6 +15,8 @@ fn main() {
     let letters = create_letters(&selected_word);
 
     display_progress(&letters);
+
+    println!("The selected word is {}", selected_word);
 }
 
 fn select_word() -> String {
