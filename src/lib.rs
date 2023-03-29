@@ -9,13 +9,12 @@ const ALLOWED_ATTEMPTS: u8 = 5;
 
 pub struct Letter {
     character: char,
-    revealed: bool
+    revealed: bool,
 }
 
 pub fn select_word() -> String {
     // Open File
-    let mut file = File::open("words.txt")
-        .expect("Could not open file!");
+    let mut file = File::open("words.txt").expect("Could not open file!");
 
     // Load file contents
     let mut file_contents = String::new();
@@ -39,7 +38,7 @@ pub fn create_letters(word: &String) -> Vec<Letter> {
     for c in word.chars() {
         letters.push(Letter {
             character: c,
-            revealed: false
+            revealed: false,
         });
     }
 
@@ -52,7 +51,7 @@ pub fn display_progress(letters: &Vec<Letter>) {
     for letter in letters {
         display_string.push(' ');
 
-        if letter.revealed{
+        if letter.revealed {
             display_string.push(letter.character);
         } else {
             display_string.push('_')
@@ -64,22 +63,28 @@ pub fn display_progress(letters: &Vec<Letter>) {
     println!("{}", display_string);
 }
 
+// Figure out how to limit user input to ONLY 1 letter at a time (or '*') if not acceptable print a message
+
 pub fn read_user_input_character() -> char {
     let mut user_input = String::new();
-
     // Get user input
     match io::stdin().read_line(&mut user_input) {
         // if succesful
-        Ok(_) => {
-            match user_input.chars().next() {
-                Some(c) => { return c; }
-                None => { return '*'; }
+        Ok(_) => match user_input.chars().next() {
+            Some(c) => {
+                return c;
             }
+            None => {
+                return '*';
+            }
+        },
+        Err(_) => {
+            return '*';
         }
-        Err (_) => { return '*'; }
     }
 }
 
+// create win condition for figuring out the word, create intro message, sort words by difficulty, add minimal UI
 pub fn game_loop() {
     let mut turns_left = ALLOWED_ATTEMPTS;
     let selected_word = select_word();
@@ -90,6 +95,11 @@ pub fn game_loop() {
         println!("You have {} turns left.", turns_left);
 
         display_progress(&letters);
+
+        if !letters.iter().any(|letter| !letter.revealed) {
+            println!("Congratulations, you won!");
+            break;
+        }
 
         println!("Please enter a letter to guess:");
         let user_char = read_user_input_character();
@@ -107,14 +117,37 @@ pub fn game_loop() {
                 at_least_one_revealed = true;
             }
         }
-        if !at_least_one_revealed{
+        if !at_least_one_revealed {
             turns_left -= 1;
         }
         if turns_left <= 0 {
-            println! ("You lost :(");
+            println!("You lost :(");
             break;
         }
     }
 
     println!("The selected word is {}", selected_word);
+}
+
+pub fn start_menu() {
+    loop {
+        println!("Please select an option:");
+        println!("1. Start Game");
+        println!("2. Quit");
+
+        let mut input = String::new();
+
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read input");
+
+        match input.trim() {
+            "1" => game_loop(),
+            "2" => {
+                println!("Goodbye!");
+                break;
+            }
+            _ => println!("Invalid input, please try again"),
+        }
+    }
 }
